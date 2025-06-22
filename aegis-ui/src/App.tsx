@@ -1,5 +1,5 @@
 import Chat, { Bubble, useMessages } from '@chatui/core';
-import '@chatui/core/es/styles/index.css';
+import '@chatui/core/dist/index.css';
 import { useState } from 'react';
 
 const API_URL = import.meta.env.VITE_API || 'http://localhost:8910';
