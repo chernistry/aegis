@@ -13,6 +13,7 @@ from .chunking import TextChunker
 from .embeddings import EmbeddingModel
 from .retrievers import HybridRetriever
 from .rerankers import CrossEncoderReranker
+from .retrievers.web_search import WebSearchRetriever
 
 
 class AegisRAGPipeline:
@@ -54,6 +55,11 @@ class AegisRAGPipeline:
             embed_model=self.embed_model,
             collection_name=self.collection_name,
         )
+        self.web_search_enabled = os.getenv("ENABLE_WEB_SEARCH", "0") == "1"
+        if self.web_search_enabled:
+            self.web_retriever = WebSearchRetriever()
+        else:
+            self.web_retriever = None
         self.reranker = CrossEncoderReranker()
 
         # Configuration for generation backend (Ollama by default)
@@ -112,6 +118,9 @@ class AegisRAGPipeline:
         """Execute full RAG flow and stream the generated answer token by token."""
         # 1. Retrieve candidates using hybrid search
         candidates = self.hybrid_retriever.retrieve(question, top_k=top_k * 3)
+        # Optionally augment with web search results
+        if self.web_retriever is not None:
+            candidates.extend(self.web_retriever.retrieve(question, top_k=top_k))
 
         # 2. Rerank with cross-encoder
         top_docs = self.reranker.rerank(question, candidates, top_k=top_k)
@@ -132,6 +141,8 @@ class AegisRAGPipeline:
         """Execute full RAG flow and return generated answer using hybrid retrieval + rerank."""
         # 1. Retrieve candidates using hybrid search (retrieve more for reranking)
         candidates = self.hybrid_retriever.retrieve(question, top_k=top_k * 3)
+        if self.web_retriever is not None:
+            candidates.extend(self.web_retriever.retrieve(question, top_k=top_k))
 
         # 2. Rerank with cross-encoder
         top_docs = self.reranker.rerank(question, candidates, top_k=top_k)
