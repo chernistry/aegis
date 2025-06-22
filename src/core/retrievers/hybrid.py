@@ -48,6 +48,17 @@ class HybridRetriever:
             # Empty collection; create dummy matrix to avoid errors
             self._tfidf_matrix = None
 
+        self.cache_collection_name = "web_cache"
+        self._has_cache_collection = False
+        # Detect if cache collection exists and has points
+        try:
+            if self.client.collection_exists(collection_name=self.cache_collection_name):
+                meta = self.client.get_collection(self.cache_collection_name)
+                self._has_cache_collection = (meta.points_count or 0) > 0
+        except Exception:  # pragma: no cover
+            # Any failure disables cache retrieval gracefully
+            self._has_cache_collection = False
+
     # ---------------------------------------------------------------------
     # Public API
     # ---------------------------------------------------------------------
@@ -67,9 +78,17 @@ class HybridRetriever:
         dense_hits = self._dense_search(query, limit=top_k)
         sparse_hits = self._sparse_search(query, limit=top_k)
 
+        # Optional: attempt retrieval from cached web collection first
+        dense_cache_hits: List[Tuple[str, dict, float]] = []
+        if self._has_cache_collection:
+            dense_cache_hits = self._dense_search(query, limit=top_k, collection_name=self.cache_collection_name)
+
+        # Combine dense results prioritizing cache hits
+        dense_hits_combined = dense_cache_hits + dense_hits
+
         # RRF fusion
         scores: defaultdict[str, float] = defaultdict(float)
-        for rank, (pid, _payload, _score) in enumerate(dense_hits):
+        for rank, (pid, _payload, _score) in enumerate(dense_hits_combined):
             scores[pid] += 1 / (self.rrf_k + rank)
         for rank, (pid, _score) in enumerate(sparse_hits):
             scores[pid] += 1 / (self.rrf_k + rank)
@@ -87,11 +106,13 @@ class HybridRetriever:
     # ---------------------------------------------------------------------
     # Internal helpers
     # ---------------------------------------------------------------------
-    def _dense_search(self, query: str, limit: int) -> List[Tuple[str, dict, float]]:
+    def _dense_search(self, query: str, limit: int, collection_name: Optional[str] = None) -> List[Tuple[str, dict, float]]:
+        """Dense vector similarity search in specified Qdrant collection."""
+        target_collection = collection_name or self.collection_name
         # Embed the query
         query_vec = self.embed_model.embed([query])[0]
         results = self.client.search(
-            collection_name=self.collection_name,
+            collection_name=target_collection,
             query_vector=query_vec,
             limit=limit,
             with_payload=True,

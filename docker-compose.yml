@@ -63,5 +63,5 @@ services:
       - api
 
 volumes:
-  qdrant_data:
+  qdrant_data: 
   ollama_state: 
