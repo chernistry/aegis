@@ -11,4 +11,5 @@ numpy>=1.25,<2.0
 scikit-learn>=1.4,<1.7
 tqdm>=4.66,<5.0
 llama-index-vector-stores-qdrant==0.1.4
-sentence-transformers>=2.7,<3.0 
+sentence-transformers>=2.7,<3.0
+prometheus-fastapi-instrumentator==6.1.0 

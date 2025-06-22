@@ -4,10 +4,18 @@ from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 import os
 from typing import AsyncGenerator
+from prometheus_fastapi_instrumentator import Instrumentator
 
 from src.core.pipeline import AegisRAGPipeline
 
 app = FastAPI(title="Aegis RAG API", version="0.1.0")
+
+# Initialize metrics instrumentator (Prometheus)
+instrumentator = (
+    Instrumentator()
+    .instrument(app)
+    .expose(app, include_in_schema=False, should_gzip=True)
+)
 
 # CORS for local dev UI
 app.add_middleware(
