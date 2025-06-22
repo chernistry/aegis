@@ -1,6 +1,9 @@
 # Aegis RAG
 <!-- [CI](https://img.shields.io/github/actions/workflow/status/chernistry/aegis-rag/ci.yml?label=CI&branch=main)  -->
+![Status](https://img.shields.io/badge/status-work_in_progress-yellow)
 ![License](https://img.shields.io/badge/License-Apache%202.0-blue)
+
+> **Note:** This project is currently under active development (approx. 70% complete). Core features like hybrid retrieval and web search are functional, but CI/CD, full test coverage, and advanced observability are on the immediate roadmap.
 
 Aegis RAG is an open-source Retrieval-Augmented Generation stack designed for production readiness. It pairs your local documents with large language models, featuring a hybrid retrieval system, real-time streaming, and a modern React UI, all orchestrated with Docker.
 
