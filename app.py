@@ -23,9 +23,9 @@ if not JINA_API_KEY:
 
 QDRANT_URL = os.getenv("QDRANT_URL", "http://qdrant:6333")
 OLLAMA_URL = os.getenv("OLLAMA_URL", "http://ollama:11434")
-OLLAMA_MODEL = os.getenv("OLLAMA_MODEL", "llama3")
+OLLAMA_MODEL = os.getenv("OLLAMA_MODEL", "deepseek-r1:7b")
 COLLECTION_NAME = "aegis_docs_v2"
-EMBEDDING_MODEL = "jina-embeddings-v3-base-en"
+EMBEDDING_MODEL = "jina-embeddings-v3"
 RERANKER_MODEL = "jina-reranker-v2-base-multilingual"
 TOP_K_RETRIEVAL = 10  # Retrieve more documents initially for the reranker
 TOP_K_RERANK = 3    # The final number of documents to use for the answer

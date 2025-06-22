@@ -23,7 +23,7 @@ if not JINA_API_KEY:
 
 COLLECTION_NAME = "aegis_docs_v2"
 QDRANT_URL = os.getenv("QDRANT_URL", "http://localhost:6333")
-EMBEDDING_MODEL = "jina-embeddings-v3-base-en" # Using v3 model
+EMBEDDING_MODEL = "jina-embeddings-v3" # Using v3 model
 VECTOR_SIZE = 1024 # jina-embeddings-v3 models have 1024 dimensions
 
 JINA_API_HEADERS = {

@@ -64,7 +64,7 @@ class AegisRAGPipeline:
 
         # Configuration for generation backend (Ollama by default)
         self._ollama_url = os.getenv("OLLAMA_URL", "http://localhost:11434")
-        self._ollama_model = os.getenv("OLLAMA_MODEL", "llama3")
+        self._ollama_model = os.getenv("OLLAMA_MODEL", "deepseek-r1:7b")
 
     def _build_index_from_directory(self):
         if not self.data_dir.exists():
