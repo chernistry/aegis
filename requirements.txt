@@ -17,4 +17,6 @@ duckduckgo-search>=8.0,<9.0
 # Brave Search HTTP used directly; no extra dependency 
 aiohttp>=3.9,<4.0
 beautifulsoup4>=4.12,<5.0
-trafilatura>=1.6,<2.0 
+trafilatura>=1.6,<2.0
+ollama
+requests 

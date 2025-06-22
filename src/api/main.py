@@ -6,6 +6,7 @@ import os
 from typing import AsyncGenerator
 from prometheus_fastapi_instrumentator import Instrumentator
 
+# Use relative path for import that will work with the new structure
 from src.core.pipeline import AegisRAGPipeline
 
 app = FastAPI(title="Aegis RAG API", version="0.1.0")
