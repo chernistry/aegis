@@ -2,3 +2,6 @@
 .archive
 .idea
 .dev
+.env
+data/raw
+warp/
