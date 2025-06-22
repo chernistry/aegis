@@ -57,7 +57,7 @@ class AegisRAGPipeline:
         )
         self.web_search_enabled = os.getenv("ENABLE_WEB_SEARCH", "0") == "1"
         if self.web_search_enabled:
-            self.web_retriever = WebSearchRetriever()
+            self.web_retriever = WebSearchRetriever(client=self.qdrant_client, embed_model=self.embed_model)
         else:
             self.web_retriever = None
         self.reranker = CrossEncoderReranker()

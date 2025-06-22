@@ -12,6 +12,7 @@ from pathlib import Path
 from typing import List, Dict, Any
 from dotenv import load_dotenv
 from qdrant_client import QdrantClient, models
+from pypdf import PdfReader
 
 # Get your Jina AI API key for free: https://jina.ai/?sui=apikey
 load_dotenv()
@@ -59,6 +60,20 @@ def get_embeddings(chunks: List[str]) -> List[List[float]]:
     embeddings = [item['embedding'] for item in response.json().get("data", [])]
     return embeddings
 
+def read_pdf(file_path: Path) -> str:
+    """Extract text from a PDF file."""
+    try:
+        reader = PdfReader(file_path)
+        text = ""
+        for page in reader.pages:
+            page_text = page.extract_text()
+            if page_text:
+                text += page_text + "\n"
+        return text
+    except Exception as e:
+        print(f"  [Error] Failed to read PDF {file_path}: {e}")
+        return ""
+
 def main():
     """Main function to run the ingestion process."""
     client = QdrantClient(url=QDRANT_URL)
@@ -82,22 +97,32 @@ def main():
         except Exception:
             sys.exit(1)
 
-
     data_dir = Path("data/raw")
+    print(f"Current working directory: {Path.cwd()}")
+    print(f"Checking for data directory at: {data_dir.resolve()}")
+
     if not data_dir.exists():
         print(f"Data directory {data_dir} does not exist. Please create it and add documents.")
         sys.exit(1)
         
-    documents = list(data_dir.glob("**/*.md"))
+    documents = list(data_dir.glob("**/*.md")) + list(data_dir.glob("**/*.pdf"))
     if not documents:
-        print(f"No markdown documents found in {data_dir}. Nothing to ingest.")
+        print(f"No markdown or PDF documents found in {data_dir}. Nothing to ingest.")
         return
 
     point_id = 0
     for doc_path in documents:
         print(f"Processing {doc_path}...")
-        with open(doc_path, "r", encoding="utf-8") as f:
-            content = f.read()
+        content = ""
+        if doc_path.suffix == ".md":
+            with open(doc_path, "r", encoding="utf-8") as f:
+                content = f.read()
+        elif doc_path.suffix == ".pdf":
+            content = read_pdf(doc_path)
+
+        if not content.strip():
+            print(f"  No content extracted from {doc_path}. Skipping.")
+            continue
 
         chunks = get_chunks(content)
         if not chunks:

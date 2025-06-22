@@ -20,4 +20,5 @@ beautifulsoup4>=4.12,<5.0
 trafilatura>=1.6,<2.0
 ollama
 requests 
-diskcache>=5.6,<6.0 
+diskcache>=5.6,<6.0
+pypdf 
