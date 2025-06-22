@@ -1,16 +1,18 @@
 import Chat, { Bubble, useMessages } from '@chatui/core';
 import '@chatui/core/es/styles/index.css';
+import { useState } from 'react';
 
 const API_URL = import.meta.env.VITE_API || 'http://localhost:8910';
 
 function App() {
-  const { messages, appendMsg, setTyping } = useMessages([]);
+  const { messages, appendMsg } = useMessages([]);
+  const [isTyping, setIsTyping] = useState(false);
 
   async function handleSend(type: string, val: string) {
     if (type !== 'text' || !val.trim()) return;
 
     appendMsg({ type: 'text', content: { text: val }, position: 'right' });
-    setTyping(true);
+    setIsTyping(true);
 
     let answer = '';
     try {
@@ -40,7 +42,7 @@ function App() {
     }
 
     appendMsg({ type: 'text', content: { text: answer }, position: 'left' });
-    setTyping(false);
+    setIsTyping(false);
   }
 
   return (
@@ -49,6 +51,7 @@ function App() {
       messages={messages}
       onSend={handleSend}
       renderMessageContent={(m) => <Bubble content={m.content.text} />}
+      isTyping={isTyping}
     />
   );
 }

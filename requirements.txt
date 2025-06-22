@@ -13,4 +13,8 @@ tqdm>=4.66,<5.0
 llama-index-vector-stores-qdrant==0.1.4
 sentence-transformers>=2.7,<3.0
 prometheus-fastapi-instrumentator==6.1.0
-duckduckgo-search>=5.3,<6.0 
+duckduckgo-search>=8.0,<9.0
+# Brave Search HTTP used directly; no extra dependency 
+aiohttp>=3.9,<4.0
+beautifulsoup4>=4.12,<5.0
+trafilatura>=1.6,<2.0 

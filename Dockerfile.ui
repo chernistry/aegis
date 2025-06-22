@@ -1,12 +1,17 @@
-FROM node:20-alpine AS builder
+FROM node:20-bookworm-slim AS builder
 WORKDIR /app
 
 COPY aegis-ui/ ./aegis-ui
 
-RUN npm install -g pnpm \
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends git build-essential python3 \
+    && npm install -g pnpm \
     && cd aegis-ui \
-    && pnpm install --frozen-lockfile \
-    && pnpm run build
+    && pnpm add --save-dev @rollup/rollup-linux-arm64-gnu \
+    && pnpm install --frozen-lockfile --no-optional \
+    && pnpm run build \
+    && apt-get purge -y --auto-remove build-essential git python3 \
+    && rm -rf /var/lib/apt/lists/*
 
 FROM nginx:alpine
 COPY --from=builder /app/aegis-ui/dist /usr/share/nginx/html
