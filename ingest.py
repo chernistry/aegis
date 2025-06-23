@@ -97,7 +97,7 @@ def main():
         except Exception:
             sys.exit(1)
 
-    data_dir = Path("data/raw")
+    data_dir = Path("/data/raw")
     print(f"Current working directory: {Path.cwd()}")
     print(f"Checking for data directory at: {data_dir.resolve()}")
 

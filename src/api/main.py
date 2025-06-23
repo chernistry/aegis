@@ -1,10 +1,11 @@
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Body
 from fastapi.responses import StreamingResponse
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 import os
 from typing import AsyncGenerator
 from prometheus_fastapi_instrumentator import Instrumentator
+import json, uuid, time
 
 # Use relative path for import that will work with the new structure
 from src.core.pipeline import AegisRAGPipeline
@@ -29,6 +30,20 @@ app.add_middleware(
 
 pipeline: AegisRAGPipeline | None = None
 
+
+# ---------------------------- OpenAI compatibility Models ----------------------------
+
+class ModelCard(BaseModel):
+    id: str
+    object: str = "model"
+    created: int = int(time.time())
+    owned_by: str = "aegis"
+
+class ModelList(BaseModel):
+    object: str = "list"
+    data: list[ModelCard]
+
+# --------------------------------------------------------------------------------
 
 def get_pipeline() -> AegisRAGPipeline:
     global pipeline
@@ -86,4 +101,77 @@ async def chat(req: ChatRequest):
         raise HTTPException(status_code=500, detail=str(e))
     except NotImplementedError as e:
         raise HTTPException(status_code=501, detail=str(e))
-    return ChatResponse(answer=answer) 
+    return ChatResponse(answer=answer)
+
+
+# ---------------------------- OpenAI compatibility ----------------------------
+
+@app.get("/v1/models", response_model=ModelList, tags=["openai"])
+async def list_models():
+    """Return a list of available models, including our custom RAG model."""
+    return ModelList(
+        data=[
+            ModelCard(id="aegis-rag-model")
+        ]
+    )
+
+@app.post("/v1/chat/completions", tags=["openai"])
+async def openai_chat_completions(payload: dict = Body(...)):
+    """Minimal OpenAI-compatible endpoint for Open WebUI integration.
+
+    Only a subset of the full specification is implemented:
+    - `messages`: list with at least one user message (the last user message is used).
+    - `stream`: if true, SSE-style streaming chunks are returned following OpenAI format.
+    Additional fields are accepted but ignored for now.
+    """
+    model = payload.get("model", "aegis-rag-model")
+    messages = payload.get("messages", [])
+    if not messages:
+        raise HTTPException(status_code=400, detail="'messages' field is required")
+
+    # Extract user content from the last message
+    user_content = next((m.get("content", "") for m in reversed(messages) if m.get("role") == "user"), "")
+    if not user_content:
+        raise HTTPException(status_code=400, detail="No user message found in 'messages'")
+
+    top_k = payload.get("top_k", 5)
+    stream = bool(payload.get("stream", False))
+
+    if stream:
+        async def _event_stream():
+            async for token in get_pipeline().query_stream(user_content, top_k=top_k):
+                chunk = {
+                    "id": f"chatcmpl-{uuid.uuid4().hex}",
+                    "object": "chat.completion.chunk",
+                    "choices": [
+                        {
+                            "delta": {"content": token},
+                            "index": 0,
+                            "finish_reason": None,
+                        }
+                    ],
+                }
+                yield f"data: {json.dumps(chunk, ensure_ascii=False)}\n\n"
+            # Signal completion per OpenAI spec
+            yield "data: [DONE]\n\n"
+
+        return StreamingResponse(_event_stream(), media_type="text/event-stream")
+
+    # Non-streaming path
+    answer = await get_pipeline().query(user_content, top_k=top_k)
+    response_body = {
+        "id": f"chatcmpl-{uuid.uuid4().hex}",
+        "object": "chat.completion",
+        "created": int(time.time()),
+        "model": model,
+        "choices": [
+            {
+                "index": 0,
+                "message": {"role": "assistant", "content": answer},
+                "finish_reason": "stop",
+            }
+        ],
+        # Token usage accounting is skipped (set to zero for now)
+        "usage": {"prompt_tokens": 0, "completion_tokens": 0, "total_tokens": 0},
+    }
+    return response_body 
