@@ -1,4 +1,4 @@
-THIS SHOULD BE A LINTER ERROR#!/usr/bin/env python3
+#!/usr/bin/env python3
 """
 Aegis RAG System - Main FastAPI Application
 
@@ -11,6 +11,7 @@ A production-ready, enterprise-grade RAG system with advanced features:
 - Error handling and resilience
 """
 
+import asyncio
 import logging
 import os
 import sys
