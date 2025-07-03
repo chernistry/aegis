@@ -1,0 +1,72 @@
+services:
+  qdrant:
+    image: qdrant/qdrant:latest
+    restart: unless-stopped
+    ports:
+      - "6333:6333"
+      - "6334:6334"
+    volumes:
+      - qdrant_data:/qdrant/storage
+
+  ollama:
+    image: ollama/ollama:latest
+    restart: unless-stopped
+    ports:
+      - "11434:11434"
+    volumes:
+      - ollama_state:/root/.ollama
+
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile.api
+    command: uvicorn src.api.main:app --host 0.0.0.0 --port 8910 --reload
+    environment:
+      - JINA_API_KEY=${JINA_API_KEY}
+      - QDRANT_URL=http://qdrant:6333
+      - OLLAMA_URL=http://ollama:11434
+      - OLLAMA_MODEL=deepseek-r1:7b
+      - OPENROUTER_KEYS_CSV=/app/keys.csv
+      - OPENAI_API_KEY=sk-dummy-key
+    ports:
+      - "8910:8910"
+    depends_on:
+      - qdrant
+      - ollama
+    restart: unless-stopped
+
+  ingestor:
+    build:
+      context: .
+      dockerfile: Dockerfile.api
+    command: ["/app/wait-for-it.sh", "qdrant:6333", "-t", "60", "--", "python", "-m", "src.scripts.ingest", "--data_dir", "/app/data/raw", "--collection", "aegis_docs"]
+    environment:
+      - JINA_API_KEY=${JINA_API_KEY}
+      - QDRANT_URL=http://qdrant:6333
+    depends_on:
+      - qdrant
+    restart: 'no'
+
+  openwebui:
+    image: dyrnq/open-webui:latest
+    restart: unless-stopped
+    ports:
+      - "8920:8080"
+    volumes:
+      - open_webui_data:/app/backend/data
+    environment:
+      - ENABLE_PERSISTENT_CONFIG=true
+      - OLLAMA_BASE_URL=http://ollama:11434
+      - API_BASE_URL=http://api:8910
+      - OPENAI_API_BASE_URLS=http://api:8910/v1
+      - OPENAI_API_KEYS=sk-dummy-key
+      - CUSTOM_MODELS=mistralai/mistral-small-3.2-24b-instruct:free
+      - DEFAULT_MODEL=mistralai/mistral-small-3.2-24b-instruct:free
+    depends_on:
+      - ollama
+      - api
+
+volumes:
+  qdrant_data: 
+  ollama_state: 
+  open_webui_data: 

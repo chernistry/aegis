@@ -1,0 +1,8 @@
+.archive/
+.archive
+.idea
+.dev
+.env
+data/raw
+warp/
+keys.csv
