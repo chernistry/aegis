@@ -1,5 +1,6 @@
 # Aegis RAG System
 
+
 A state-of-the-art Retrieval-Augmented Generation (RAG) system built with FastAPI, Qdrant vector database, Ollama LLM, and Jina AI for embeddings and reranking.
 
 ## 🚀 Features
@@ -97,9 +98,81 @@ chmod +x .run.sh
 ## 📚 API Reference
 
 ### Health Check
-```bash
-curl http://localhost:8910/health
+
+## Overview
+
+Aegis is a production-grade Retrieval-Augmented Generation (RAG) system designed for enterprise document processing and intelligent question answering. The system leverages state-of-the-art embedding models, semantic reranking, and large language models to deliver accurate, contextually relevant responses from organizational knowledge bases.
+
+## Architecture
+
+### Core Components
+
+- **API Layer**: FastAPI-based REST API with OpenAPI specification
+- **Vector Database**: Qdrant for high-performance similarity search
+- **Embedding Service**: Jina AI embeddings (v3) for semantic understanding
+- **Reranking Engine**: Jina AI reranker for result optimization
+- **Language Model**: Ollama-hosted LLMs for response generation
+- **Document Processing**: Multi-format ingestion pipeline
+
+### System Architecture
+
 ```
+┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
+│   Client Apps   │    │   Open WebUI    │    │   API Gateway   │
+└─────────┬───────┘    └─────────┬───────┘    └─────────┬───────┘
+          │                      │                      │
+          └──────────────────────┼──────────────────────┘
+                                 │
+          ┌─────────────────────────────────────────────┐
+          │              Aegis API                      │
+          │        (FastAPI + CORS)                     │
+          └─────────────────┬───────────────────────────┘
+                            │
+    ┌───────────────────────┼───────────────────────┐
+    │                       │                       │
+┌───▼────┐         ┌────────▼────────┐     ┌────────▼────────┐
+│ Qdrant │         │   Jina AI APIs  │     │   Ollama LLM    │
+│Vector  │         │ (Embed/Rerank)  │     │   (DeepSeek)    │
+│Database│         └─────────────────┘     └─────────────────┘
+└────────┘
+```
+
+## Features
+
+### Production Capabilities
+- **Scalable Architecture**: Containerized microservices with horizontal scaling support
+- **High Availability**: Service redundancy and health monitoring
+- **Security**: API key management and CORS configuration
+- **Monitoring**: Health checks and error handling
+- **Multi-format Support**: PDF, Markdown document processing
+
+### Technical Features
+- **Advanced Retrieval**: Semantic search with cosine similarity
+- **Result Optimization**: Two-stage retrieval with reranking
+- **Context Management**: Intelligent document chunking and segmentation
+- **Flexible LLM Integration**: Pluggable language model architecture
+- **Real-time Processing**: Streaming responses and concurrent request handling
+
+## Quick Start
+
+### Prerequisites
+- Docker and Docker Compose
+- Jina AI API key ([Get free key](https://jina.ai/?sui=apikey))
+- 8GB+ RAM for optimal performance
+
+### Environment Setup
+
+1. Clone the repository and configure environment:
+```bash
+cp .env.example .env
+# Edit .env with your Jina AI API key
+```
+
+2. Launch the system:
+```bash
+docker-compose up -d
+```
+
 
 ### Chat (Non-streaming)
 ```bash

@@ -327,6 +327,8 @@ Instructions:
 Answer:"""
 
     try:
+        logger.debug("Generating LLM response")
+        
         response = ollama_client.chat(
             model=config.OLLAMA_MODEL,
             messages=[{'role': 'user', 'content': prompt}],
