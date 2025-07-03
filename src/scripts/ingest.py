@@ -1,6 +1,7 @@
 import argparse
 from pathlib import Path
 import asyncio
+import os
 
 from llama_index.core import SimpleDirectoryReader, VectorStoreIndex
 from llama_index.core.storage import StorageContext
@@ -23,7 +24,7 @@ async def main(data_dir: Path, collection_name: str):
 
     embed_model = EmbeddingModel()
 
-    client = QdrantClient(url="http://localhost:6333")
+    client = QdrantClient(url=os.getenv("QDRANT_URL", "http://localhost:6333"))
     vector_store = QdrantVectorStore(client=client, collection_name=collection_name)
     storage_context = StorageContext.from_defaults(vector_store=vector_store)
 

@@ -4,7 +4,14 @@ Aegis RAG System Integration Test Suite
 This script validates that all components are working correctly.
 """
 
-import requests
+try:
+    import requests
+except ImportError:
+    print("❌ requests module not found. Installing...")
+    import subprocess
+    subprocess.run(["pip", "install", "requests"], check=True)
+    import requests
+
 import json
 import time
 import sys

@@ -41,7 +41,7 @@ services:
     build:
       context: .
       dockerfile: Dockerfile.api
-    command: python ingest.py
+    command: python -m src.scripts.ingest --data_dir /data/raw --collection aegis_docs
     environment:
       - JINA_API_KEY=${JINA_API_KEY}
       - QDRANT_URL=http://qdrant:6333
