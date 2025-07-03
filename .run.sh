@@ -22,6 +22,8 @@ show_help() {
     echo "  logs [service]- Show logs for all or specific service"
     echo "  ingest        - Restart ingestor to process documents in data/raw"
     echo "  rebuild       - Rebuild and restart all containers"
+    echo "  test          - Run system integration tests"
+    echo "  verify        - Run deployment verification checks"
     echo "  clean         - Remove all containers and volumes (data will be lost)"
     echo "  help          - Show this help message"
     echo ""
@@ -86,6 +88,19 @@ case "$1" in
         docker compose down
         docker compose up -d --build
         echo -e "${GREEN}System rebuilt and restarted. UI available at http://localhost:8920${NC}"
+        ;;
+    test)
+        echo -e "${BLUE}Running Aegis RAG system tests...${NC}"
+        if command -v python3 &> /dev/null; then
+            python3 test_system.py
+        else
+            echo -e "${RED}Python 3 is required to run tests.${NC}"
+            exit 1
+        fi
+        ;;
+    verify)
+        echo -e "${BLUE}Running deployment verification...${NC}"
+        ./deploy_verify.sh
         ;;
     clean)
         check_docker

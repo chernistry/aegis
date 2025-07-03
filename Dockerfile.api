@@ -7,7 +7,8 @@ COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
 # Copy the application code
-COPY app.py .
+COPY src/ ./src/
+COPY app.py .  # Legacy compatibility (main API is now src/api/main.py)
 COPY ingest.py .
 
 # Set up environment variable for Python path
@@ -18,4 +19,4 @@ ENV DOCKER_ENV=true
 EXPOSE 8910
 
 # The CMD will be overridden by docker-compose, but this is a good default.
-CMD ["uvicorn", "app:app", "--host", "0.0.0.0", "--port", "8910"] 
+CMD ["uvicorn", "src.api.main:app", "--host", "0.0.0.0", "--port", "8910"] 

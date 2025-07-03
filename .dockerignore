@@ -15,10 +15,9 @@ __pycache__/
 venv/
 env/
 
-# Node
+# Node (legacy cleaned up)
 node_modules/
 **/node_modules
-aegis-ui/node_modules/
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*

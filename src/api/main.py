@@ -1,4 +1,4 @@
-from fastapi import FastAPI, HTTPException, Body
+from fastapi import FastAPI, HTTPException, Body, BackgroundTasks, Query
 from fastapi.responses import StreamingResponse
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
@@ -6,6 +6,8 @@ import os
 from typing import AsyncGenerator
 from prometheus_fastapi_instrumentator import Instrumentator
 import json, uuid, time
+import subprocess
+from pathlib import Path
 
 # Use relative path for import that will work with the new structure
 from src.core.pipeline import AegisRAGPipeline
@@ -175,3 +177,65 @@ async def openai_chat_completions(payload: dict = Body(...)):
         "usage": {"prompt_tokens": 0, "completion_tokens": 0, "total_tokens": 0},
     }
     return response_body 
+
+# ---------------------------- Internal Operations ----------------------------
+
+class IngestionRequest(BaseModel):
+    path: str
+    collection_name: str = "aegis_docs"
+
+class IngestionResponse(BaseModel):
+    status: str
+    message: str
+
+def run_ingestion_background(data_path: str, collection_name: str = "aegis_docs"):
+    """Background task to run document ingestion."""
+    try:
+        # Run the ingestion script
+        cmd = [
+            "python", "-m", "src.scripts.ingest", 
+            "--data_dir", data_path,
+            "--collection", collection_name
+        ]
+        result = subprocess.run(cmd, capture_output=True, text=True, cwd="/app")
+        if result.returncode == 0:
+            print(f"✅ Ingestion completed for {data_path}")
+        else:
+            print(f"❌ Ingestion failed for {data_path}: {result.stderr}")
+    except Exception as e:
+        print(f"❌ Ingestion error for {data_path}: {e}")
+
+@app.post("/internal/ingest", response_model=IngestionResponse, tags=["internal"])
+async def internal_ingest(
+    background_tasks: BackgroundTasks,
+    path: str = Query(..., description="Path to documents directory"),
+    collection: str = Query("aegis_docs", description="Qdrant collection name")
+):
+    """Internal endpoint for triggering document ingestion from Open WebUI file uploads.
+    
+    This endpoint is designed to be called by Open WebUI plugins after file upload.
+    It validates the path and starts a background ingestion task.
+    """
+    # Validate path exists and is accessible
+    doc_path = Path(path)
+    if not doc_path.exists():
+        raise HTTPException(status_code=404, detail=f"Path {path} not found")
+    
+    if not doc_path.is_dir():
+        raise HTTPException(status_code=400, detail=f"Path {path} is not a directory")
+    
+    # Count documents to ingest
+    documents = list(doc_path.glob("**/*.md")) + list(doc_path.glob("**/*.pdf")) + list(doc_path.glob("**/*.txt"))
+    if not documents:
+        return IngestionResponse(
+            status="no_documents", 
+            message=f"No supported documents found in {path}"
+        )
+    
+    # Start background ingestion
+    background_tasks.add_task(run_ingestion_background, str(doc_path), collection)
+    
+    return IngestionResponse(
+        status="accepted",
+        message=f"Ingestion started for {len(documents)} documents in {path}"
+    ) 

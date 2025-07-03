@@ -20,16 +20,18 @@ services:
     build:
       context: .
       dockerfile: Dockerfile.api
-    command: uvicorn app:app --host 0.0.0.0 --port 8910 --reload
+    command: uvicorn src.api.main:app --host 0.0.0.0 --port 8910 --reload
     environment:
       - JINA_API_KEY=${JINA_API_KEY}
       - QDRANT_URL=http://qdrant:6333
       - OLLAMA_URL=http://ollama:11434
       - OLLAMA_MODEL=deepseek-r1:7b
+      - ENABLE_WEB_SEARCH=1
     ports:
       - "8910:8910"
     volumes:
       - ${PWD}/data:/data
+      - ${PWD}/data/raw:/workspace/documents
     depends_on:
       - qdrant
       - ollama
@@ -51,17 +53,7 @@ services:
     # It won't be restarted unless you manually run `docker compose up ingestor`.
     restart: 'no'
 
-  # Удаляем устаревший сервис UI
-  # ui:
-  #   build:
-  #     context: .
-  #     dockerfile: Dockerfile.ui
-  #   ports:
-  #     - "8920:80"
-  #   environment:
-  #     - VITE_API=http://api:8910
-  #   depends_on:
-  #     - api
+
 
   openwebui:
     image: dyrnq/open-webui:latest
@@ -70,9 +62,12 @@ services:
       - "8920:8080"
     volumes:
       - open_webui_data:/app/backend/data
+      - ${PWD}/data/raw:/workspace/documents
     environment:
       - OLLAMA_BASE_URL=http://ollama:11434
       - 'OPENAI_BASE_URLS=http://api:8910/v1'
+      - WEBUI_PLUGINS=supreme_file_management
+      - UPLOAD_DIR=/workspace/documents
     depends_on:
       - ollama
       - api
