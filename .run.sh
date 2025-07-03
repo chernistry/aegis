@@ -43,7 +43,7 @@ case "$1" in
     start)
         check_docker
         echo -e "${GREEN}Starting Aegis RAG system...${NC}"
-        docker compose up -d
+        sudo docker compose up -d
         echo -e "${GREEN}System started. UI available at http://localhost:8920${NC}"
         ;;
     stop)
