@@ -32,7 +32,7 @@ show_help() {
 
 # Check if Docker is running
 check_docker() {
-    if ! docker info > /dev/null 2>&1; then
+    if ! sudo docker info > /dev/null 2>&1; then
         echo -e "${RED}Error: Docker is not running. Please start Docker first.${NC}"
         exit 1
     fi
